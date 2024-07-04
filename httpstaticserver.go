@@ -13,11 +13,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+        "os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
-	"time"
+        "sync"
+        "time"
 
 	"regexp"
 
@@ -141,7 +142,10 @@ func (s *HTTPStaticServer) hIndex(w http.ResponseWriter, r *http.Request) {
 		s.hInfo(w, r)
 		return
 	}
-
+        if r.FormValue("op") == "decode" {
+                s.hDecode(w, r)
+                return
+        }
 	if r.FormValue("op") == "archive" {
 		s.hZip(w, r)
 		return
@@ -354,6 +358,60 @@ func (s *HTTPStaticServer) hInfo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
 }
+
+
+func processPath(path string) string {
+        // 使用斜杠分割字符串
+        parts := strings.Split(path, "/")
+        // 去除数组的最后两部分
+        parts = parts[:len(parts)-2]
+        // 拼接 "symbols"
+        parts = append(parts, "symbols")
+        // 使用斜杠拼接字符串
+        finalPath := strings.Join(parts, "/")
+        return finalPath
+}
+
+func (s *HTTPStaticServer) hDecode(w http.ResponseWriter, r *http.Request) {
+        //relPath: /home/bridge/gohttpserver/dump/gbmanager/1.0.1/dumpfile/74F220D6A4EB1EA1A424D8426EEEA2CC0.dmp
+        relPath := s.getRealPath(r)
+        log.Println("relPath:",relPath)
+
+        simbolsPath := processPath(relPath)
+        log.Println("simbolsPath:", simbolsPath)
+
+        exePath, _ := os.Executable()
+        log.Println("osPath:",exePath)
+
+        parts := strings.Split(exePath, "/")
+        if len(parts) > 1 {
+                parts = parts[:len(parts)-1]
+        }
+        newPath := strings.Join(parts, "/")
+        log.Println(newPath)
+
+        log.Println("dump2txt is Exist:",fileExists(newPath + "/dump2txt.sh"))
+
+        command := "sh"
+        args := []string{"dump2txt.sh",relPath,simbolsPath}
+
+        // 创建一个exec.Cmd对象
+        cmd := exec.Command(command, args...)
+
+        // 获取命令的输出
+        output, err := cmd.Output()
+        if err != nil {
+                fmt.Printf("dump2txt.sh error: %v\n", err)
+                return
+        }
+
+        // 打印命令的输出
+        fmt.Println(string(output))
+        response := string(output)
+        w.Header().Set("Content-Type", "application/txt")
+        w.Write([]byte(response))
+}
+
 
 func (s *HTTPStaticServer) hZip(w http.ResponseWriter, r *http.Request) {
 	CompressToZip(w, s.getRealPath(r))

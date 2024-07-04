@@ -268,6 +268,30 @@ var vm = new Vue({
         }
       })
     },
+     decode: function (f) {
+       console.log(f);
+         var that = this;
+       $.ajax({
+         url: this.getEncodePath(f.name),
+         data: {
+           op: "decode",
+         },
+         method: "GET",
+         success: function (res) {
+            console.log("decode:" , res)
+             // 打开新的标签
+             var newTab = window.open();
+             // 将字符串写入新标签
+             newTab.document.write("<title>" + "dmp解析结果" + "</title>");
+             newTab.document.write("<pre>" + res + "</pre>");
+             // 关闭新标签的文档流，使其可以开始加载
+             newTab.document.close();
+         },
+         error: function (jqXHR, textStatus, errorThrown) {
+           showErrorMessage(jqXHR)
+         }
+       })
+     },
     makeDirectory: function () {
       var name = window.prompt("current path: " + location.pathname + "\nplease enter the new directory name", "")
       console.log(name)

@@ -15,8 +15,8 @@ GITCOMMIT=$(git rev-parse HEAD)
 BUILDTIME=$(date -u +%Y/%m/%d-%H:%M:%S)
 
 LDFLAGS="-X main.VERSION=$VERSION -X main.BUILDTIME=$BUILDTIME -X main.GITCOMMIT=$GITCOMMIT"
-if [[ -n "${EX_LDFLAGS:-""}" ]]
-then
+
+if [ -n "${EX_LDFLAGS:-""}" ]; then
 	LDFLAGS="$LDFLAGS $EX_LDFLAGS"
 fi
 
@@ -27,8 +27,8 @@ build() {
 		-o dist/gohttpserver-${3:-""}
 }
 
-build linux arm linux-arm
-build darwin amd64 mac-amd64
+#build linux arm linux-arm
+#build darwin amd64 mac-amd64
 build linux amd64 linux-amd64
-build linux 386 linux-386
-build windows amd64 win-amd64.exe
+#build linux 386 linux-386
+#build windows amd64 win-amd64.exe
